@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { read, utils } from "xlsx";
 import ProductChart from "./ProductChart";
+import { Box, Button, TextField, Typography } from "@mui/material";
+import "./Product.css";
 
 const Product = () => {
   const [products, setProducts] = useState([]);
@@ -19,6 +21,10 @@ const Product = () => {
 
   const handleAddProduct = (event) => {
     event.preventDefault();
+    if (newProductName.trim() === "") {
+      setErrorMessage("El nombre del producto no puede estar vacío");
+      return;
+    }
     const newProduct = { id: Date.now(), name: newProductName };
     const updatedProducts = [...products, newProduct];
     setProducts(updatedProducts);
@@ -41,8 +47,8 @@ const Product = () => {
       p.id === editingProductId ? { ...p, name: newProductName } : p
     );
     setProducts(updatedProducts);
-    setNewProductName("");
     setIsEditing(false);
+    setNewProductName("");
     setEditingProductId(null);
     localStorage.setItem("products", JSON.stringify(updatedProducts));
   };
@@ -57,61 +63,65 @@ const Product = () => {
     setSelectedFile(event.target.files[0]);
   };
 
-  const handleUpload = async (event) => {
+  const handleUpload = (event) => {
     event.preventDefault();
-    setErrorMessage(null);
-
-    if (selectedFile) {
-      try {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const data = new Uint8Array(e.target.result);
-          const workbook = read(data, { type: "array" });
-          const worksheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[worksheetName];
-          const productsData = utils.sheet_to_json(worksheet);
-
-          const validatedProducts = productsData.filter((product) => {
-            if (product.name && typeof product.name === "string") {
-              return true;
-            }
-            setErrorMessage(
-              "El archivo Excel contiene datos inválidos. Por favor, asegúrate de que el nombre del producto sea un valor de texto válido."
-            );
-            return false;
-          });
-
-          if (validatedProducts.length > 0) {
-            const updatedProducts = [...products, ...validatedProducts];
-            setProducts(updatedProducts);
-            localStorage.setItem("products", JSON.stringify(updatedProducts));
-            setErrorMessage(null);
-            setSelectedFile(null);
-          }
-        };
-        reader.readAsArrayBuffer(selectedFile);
-      } catch (error) {
-        setErrorMessage(
-          "Hubo un error al cargar el archivo Excel. Por favor, asegúrate de que el archivo sea válido."
-        );
-      }
-    } else {
-      setErrorMessage("Por favor, selecciona un archivo Excel.");
+    if (!selectedFile) {
+      setErrorMessage("Por favor, seleccione un archivo.");
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = utils.sheet_to_json(worksheet);
+
+        // Validar datos
+        const newProducts = json.map((item) => {
+          if (!item.name) {
+            throw new Error("El archivo contiene productos sin nombre.");
+          }
+          return {
+            id: Date.now() + Math.random(),
+            name: item.name,
+          };
+        });
+
+        // Evitar duplicados
+        const uniqueProducts = newProducts.filter(
+          (newProduct) =>
+            !products.some((product) => product.name === newProduct.name)
+        );
+
+        const updatedProducts = [...products, ...uniqueProducts];
+        setProducts(updatedProducts);
+        localStorage.setItem("products", JSON.stringify(updatedProducts));
+        setErrorMessage(null);
+      } catch (error) {
+        setErrorMessage(error.message);
+      }
+    };
+    reader.readAsArrayBuffer(selectedFile);
   };
 
   return (
-    <div>
+    <div className="form-container">
       <h2>Gestión de Productos</h2>
       <h3>Agregar Nuevo Producto</h3>
       <form onSubmit={handleAddProduct}>
-        <input
-          type="text"
-          value={newProductName}
-          onChange={(e) => setNewProductName(e.target.value)}
-          placeholder="Nombre del producto"
-          required
-        />
+        <div>
+          <label htmlFor="newProductName">Nombre del producto:</label>
+          <input
+            type="text"
+            id="newProductName"
+            value={newProductName}
+            onChange={(e) => setNewProductName(e.target.value)}
+            placeholder="Nombre del producto"
+            required
+          />
+        </div>
         <button type="submit">Agregar Producto</button>
       </form>
       <h3>Cargar Productos desde Excel</h3>
@@ -121,10 +131,10 @@ const Product = () => {
       </form>
       {errorMessage && <p className="error">{errorMessage}</p>}
       <h3>Lista de Productos</h3>
-      <ul>
+      <ul className="product-list">
         {products.map((product) => (
           <li key={product.id}>
-            {product.name}
+            <span>{product.name}</span>
             <button onClick={() => handleEditProduct(product.id)}>
               Editar
             </button>
@@ -136,13 +146,17 @@ const Product = () => {
       </ul>
       {isEditing && (
         <form onSubmit={handleSaveEdit}>
-          <input
-            type="text"
-            value={newProductName}
-            onChange={(e) => setNewProductName(e.target.value)}
-            placeholder="Nombre del producto"
-            required
-          />
+          <div>
+            <label htmlFor="editProductName">Nombre del producto:</label>
+            <input
+              type="text"
+              id="editProductName"
+              value={newProductName}
+              onChange={(e) => setNewProductName(e.target.value)}
+              placeholder="Nombre del producto"
+              required
+            />
+          </div>
           <button type="submit">Guardar Cambios</button>
         </form>
       )}

@@ -1,0 +1,125 @@
+.product-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    max-width: 800px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .product-container h2,
+  .product-container h3 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: var(--text-color);
+  }
+  
+  .product-container form {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .product-container input {
+    width: 100%;
+    padding: var(--input-padding);
+    margin: 10px 0;
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  .product-container button {
+    width: 100%;
+    padding: var(--button-padding);
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+  }
+  
+  .product-container button:hover {
+    background-color: var(--primary-color-hover);
+  }
+  
+  .product-container ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .product-container li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .product-container li span {
+    flex-grow: 1;
+    font-size: 16px;
+    color: var(--text-color);
+  }
+  
+  .product-container li button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .product-container li button:hover {
+    background-color: var(--primary-color-hover);
+  }
+  
+  .error {
+    color: red;
+  }
+  
+  .product-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .product-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+
+  .product-list span {
+    font-size: 16px;
+    color: var(--text-color);
+  }
+
+  .product-list button {
+    padding: var(--button-padding);
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .product-list button:hover {
+    background-color: var(--primary-color-hover);
+  }

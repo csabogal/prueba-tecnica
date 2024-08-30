@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Box, Button, TextField, Typography } from "@mui/material";
+import "./Profile.css";
 
 const Profile = () => {
   const [user, setUser] = useState({ username: "", email: "", password: "" });
@@ -27,43 +29,52 @@ const Profile = () => {
   };
 
   return (
-    <div>
-      <h2>Perfil del Usuario</h2>
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Perfil del Usuario
+      </Typography>
 
       {!isEditing ? (
-        <div>
-          <p>Nombre de usuario: {user.username}</p>
-          <p>Correo electrónico: {user.email}</p>
-          <p>Contraseña: {user.password}</p>
-          <button onClick={handleEdit}>Editar</button>
-        </div>
+        <Box>
+          <Typography variant="body1">
+            Nombre de usuario: {user.username}
+          </Typography>
+          <Typography variant="body1">
+            Correo electrónico: {user.email}
+          </Typography>
+          <Typography variant="body1">Contraseña: ********</Typography>
+          <Button variant="contained" color="primary" onClick={handleEdit}>
+            Editar
+          </Button>
+        </Box>
       ) : (
         <form onSubmit={handleSave}>
-          <div>
-            <label htmlFor="username">Nombre de usuario:</label>
-            <input
-              type="text"
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              label="Nombre de usuario"
               id="username"
               name="username"
               value={user.username}
               onChange={handleChange}
               required
             />
-          </div>
-          <div>
-            <label htmlFor="email">Correo electrónico:</label>
-            <input
-              type="email"
+          </Box>
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              label="Correo electrónico"
               id="email"
               name="email"
               value={user.email}
               onChange={handleChange}
               required
             />
-          </div>
-          <div>
-            <label htmlFor="password">Contraseña:</label>
-            <input
+          </Box>
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              label="Contraseña"
               type="password"
               id="password"
               name="password"
@@ -71,11 +82,13 @@ const Profile = () => {
               onChange={handleChange}
               required
             />
-          </div>
-          <button type="submit">Guardar</button>
+          </Box>
+          <Button type="submit" variant="contained" color="primary">
+            Guardar
+          </Button>
         </form>
       )}
-    </div>
+    </Box>
   );
 };
 

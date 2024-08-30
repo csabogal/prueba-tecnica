@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import "./Login.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,38 +13,35 @@ const Login = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div className="form-container">
       <h2>Inicio de Sesión</h2>
-
-      <div>
-        <label htmlFor="email">Correo electrónico:</label>
-        <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="password">Contraseña:</label>
-        <input
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      {/* <div>
-        <a href="/profile">Ir a Perfil</a>
-      </div> */}
-      {/* <div>
-        <a href="/products">Ir a Productos</a>
-      </div> */}
-      <button type="submit">Iniciar Sesión</button>
-    </form>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="email">Correo electrónico:</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="password">Contraseña:</label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Iniciar Sesión</button>
+      </form>
+      <p>
+        ¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link>
+      </p>
+    </div>
   );
 };
 
