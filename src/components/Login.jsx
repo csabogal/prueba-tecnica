@@ -38,9 +38,9 @@ const Login = () => {
       {/* <div>
         <a href="/profile">Ir a Perfil</a>
       </div> */}
-      <div>
+      {/* <div>
         <a href="/products">Ir a Productos</a>
-      </div>
+      </div> */}
       <button type="submit">Iniciar Sesión</button>
     </form>
   );

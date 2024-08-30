@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 const Profile = () => {
-  const [user, setUser] = useState({ username: '', email: '', password: '' });
-  const [isEditing, setIsEditing] = useState(false); 
+  const [user, setUser] = useState({ username: "", email: "", password: "" });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     // Simula la obtención de datos del usuario desde el backend
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -19,7 +19,7 @@ const Profile = () => {
   const handleSave = (event) => {
     event.preventDefault();
     setIsEditing(false);
-    localStorage.setItem('user', JSON.stringify(user)); // Actualiza el usuario en el localStorage
+    localStorage.setItem("user", JSON.stringify(user)); // Actualiza el usuario en el localStorage
   };
 
   const handleChange = (event) => {
