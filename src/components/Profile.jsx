@@ -9,8 +9,26 @@ const Profile = () => {
   useEffect(() => {
     // Simula la obtención de datos del usuario desde el backend
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    if (storedUser && storedUser !== "undefined") {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (
+          parsedUser &&
+          parsedUser.username &&
+          parsedUser.email &&
+          parsedUser.password
+        ) {
+          setUser(parsedUser);
+          console.log(
+            "Datos del usuario obtenidos de localStorage:",
+            parsedUser
+          );
+        } else {
+          console.error("Datos del usuario en localStorage no son válidos");
+        }
+      } catch (error) {
+        console.error("Error parsing user data from localStorage", error);
+      }
     }
   }, []);
 
@@ -18,22 +36,53 @@ const Profile = () => {
     setIsEditing(true);
   };
 
-  const handleSave = (event) => {
-    event.preventDefault();
-    setIsEditing(false);
-    localStorage.setItem("user", JSON.stringify(user)); // Actualiza el usuario en el localStorage
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setUser((prevUser) => ({ ...prevUser, [name]: value }));
   };
 
-  const handleChange = (event) => {
-    setUser({ ...user, [event.target.name]: event.target.value });
+  const handleSave = async (event) => {
+    event.preventDefault();
+    try {
+      console.log("Enviando datos para actualización:", {
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        password: user.password,
+      });
+
+      const response = await fetch("http://localhost:5000/api/auth/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user._id,
+          username: user.username,
+          email: user.email,
+          password: user.password,
+        }),
+      });
+
+      const text = await response.text();
+      console.log("Respuesta del servidor:", text);
+
+      const data = JSON.parse(text);
+
+      if (response.ok) {
+        localStorage.setItem("user", JSON.stringify(user));
+        setIsEditing(false);
+        console.log("Perfil actualizado con éxito:", data);
+      } else {
+        console.error("Error al actualizar el perfil:", data.message);
+      }
+    } catch (error) {
+      console.error("Error al actualizar el perfil:", error);
+    }
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Perfil del Usuario
-      </Typography>
-
+    <Box className="profile-container">
       {!isEditing ? (
         <Box>
           <Typography variant="body1">

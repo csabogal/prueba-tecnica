@@ -5,11 +5,34 @@ import "./Login.css";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Aquí enviamos los datos del formulario al backend
-    console.log("Formulario enviado:", { email, password });
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Guardar el token en el localStorage
+        localStorage.setItem("token", data.token);
+        // Guardar los datos del usuario en el localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
+        // Redirigir al usuario a la página de perfil o dashboard
+        window.location.href = "/profile";
+      } else {
+        setErrorMessage(data.message);
+      }
+    } catch (error) {
+      setErrorMessage("Error al iniciar sesión");
+    }
   };
 
   return (
@@ -36,6 +59,7 @@ const Login = () => {
             required
           />
         </div>
+        {errorMessage && <p className="error">{errorMessage}</p>}
         <button type="submit">Iniciar Sesión</button>
       </form>
       <p>

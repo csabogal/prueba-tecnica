@@ -6,11 +6,30 @@ const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Aquí enviamos los datos del formulario al backend
-    console.log("Formulario enviado:", { username, email, password });
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Redirigir al usuario a la página de inicio de sesión
+        window.location.href = "/login";
+      } else {
+        setErrorMessage(data.message);
+      }
+    } catch (error) {
+      setErrorMessage("Error al registrar el usuario");
+    }
   };
 
   return (
@@ -47,10 +66,11 @@ const Register = () => {
             required
           />
         </div>
+        {errorMessage && <p className="error">{errorMessage}</p>}
         <button type="submit">Registrarse</button>
       </form>
       <p>
-        ¿Ya tienes una cuenta? <Link to="/">Inicia sesión aquí</Link>
+        ¿Ya tienes una cuenta? <Link to="/login">Inicia sesión aquí</Link>
       </p>
     </div>
   );
