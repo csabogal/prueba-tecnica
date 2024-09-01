@@ -16,6 +16,7 @@ import {
   Snackbar,
   CircularProgress,
   Box,
+  Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -32,6 +33,7 @@ const Product = () => {
     id: null,
     name: "",
     description: "",
+    category: "",
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [showChart, setShowChart] = useState(false);
@@ -43,22 +45,8 @@ const Product = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Simular una llamada a la API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const mockProducts = [
-        {
-          id: 1,
-          name: "Producto 1",
-          description: "Descripción del producto 1",
-        },
-        {
-          id: 2,
-          name: "Producto 2",
-          description: "Descripción del producto 2",
-        },
-        // ... más productos
-      ];
-      setProducts(mockProducts);
+      // Inicializar con un array vacío en lugar de productos de ejemplo
+      setProducts([]);
     } catch (err) {
       setError("Error al cargar los productos");
       console.error(err);
@@ -68,7 +56,7 @@ const Product = () => {
   };
 
   const handleOpenDialog = (
-    product = { id: null, name: "", description: "" }
+    product = { id: null, name: "", description: "", category: "" }
   ) => {
     setCurrentProduct(product);
     setOpenDialog(true);
@@ -76,7 +64,7 @@ const Product = () => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setCurrentProduct({ id: null, name: "", description: "" });
+    setCurrentProduct({ id: null, name: "", description: "", category: "" });
   };
 
   const handleSaveProduct = () => {
@@ -107,18 +95,91 @@ const Product = () => {
     const file = e.target.files[0];
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: "binary" });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const data = XLSX.utils.sheet_to_json(ws);
-      const newProducts = data.map((item, index) => ({
-        id: Date.now() + index,
-        name: item.name,
-        description: item.description,
-      }));
-      setProducts([...products, ...newProducts]);
-      setSnackbar({ open: true, message: "Productos cargados con éxito" });
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        let errors = [];
+        const validatedData = data.filter((item, index) => {
+          if (
+            !item.name ||
+            typeof item.name !== "string" ||
+            item.name.trim() === ""
+          ) {
+            errors.push(`Fila ${index + 2}: Nombre faltante o inválido`);
+            return false;
+          }
+          if (
+            !item.description ||
+            typeof item.description !== "string" ||
+            item.description.trim() === ""
+          ) {
+            errors.push(`Fila ${index + 2}: Descripción faltante o inválida`);
+            return false;
+          }
+          if (
+            !item.category ||
+            typeof item.category !== "string" ||
+            item.category.trim() === ""
+          ) {
+            errors.push(`Fila ${index + 2}: Categoría faltante o inválida`);
+            return false;
+          }
+          if (products.some((p) => p.name === item.name.trim())) {
+            errors.push(`Fila ${index + 2}: Producto "${item.name}" ya existe`);
+            return false;
+          }
+          return true;
+        });
+
+        const newProducts = validatedData.map((item) => ({
+          id: Date.now() + Math.random(),
+          name: item.name.trim(),
+          description: item.description.trim(),
+          category: item.category.trim(),
+        }));
+
+        if (newProducts.length > 0) {
+          setProducts((prevProducts) => [...prevProducts, ...newProducts]);
+        }
+
+        let message = "";
+        if (newProducts.length > 0) {
+          message += `${newProducts.length} productos cargados con éxito. `;
+        }
+        if (errors.length > 0) {
+          message += `Se encontraron ${errors.length} errores: ${errors.join(
+            "; "
+          )}`;
+        }
+        if (newProducts.length === 0 && errors.length === 0) {
+          message = "No se encontraron productos para cargar en el archivo";
+        }
+
+        setSnackbar({
+          open: true,
+          message: message,
+        });
+
+        console.log("Errores durante la carga:", errors);
+      } catch (error) {
+        console.error("Error al procesar el archivo:", error);
+        setSnackbar({
+          open: true,
+          message:
+            "Error al procesar el archivo. Asegúrese de que sea un archivo Excel válido.",
+        });
+      }
+    };
+    reader.onerror = (error) => {
+      console.error("Error al leer el archivo:", error);
+      setSnackbar({
+        open: true,
+        message: "Error al leer el archivo. Inténtelo de nuevo.",
+      });
     };
     reader.readAsBinaryString(file);
   };
@@ -186,6 +247,9 @@ const Product = () => {
                 <Typography variant="body2" color="text.secondary">
                   {product.description}
                 </Typography>
+                <Typography variant="body2" color="text.primary" sx={{ mt: 1 }}>
+                  Categoría: {product.category}
+                </Typography>
               </CardContent>
               <CardActions>
                 <Button
@@ -238,6 +302,19 @@ const Product = () => {
               })
             }
           />
+          <TextField
+            margin="dense"
+            label="Categoría"
+            type="text"
+            fullWidth
+            value={currentProduct.category}
+            onChange={(e) =>
+              setCurrentProduct({
+                ...currentProduct,
+                category: e.target.value,
+              })
+            }
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
@@ -250,8 +327,15 @@ const Product = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-      />
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity="info"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
