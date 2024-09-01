@@ -27,6 +27,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
@@ -36,15 +37,17 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Error al iniciar sesión");
+        throw new Error(data.message || "Error al iniciar sesión");
       }
 
-      const data = await response.json();
       localStorage.setItem("token", data.token);
       navigate("/profile");
     } catch (error) {
-      setErrorMessage(error.message);
+      console.error("Error de inicio de sesión:", error);
+      setErrorMessage(error.message || "Error al iniciar sesión");
     }
   };
 

@@ -57,25 +57,23 @@ const Profile = () => {
         credentials: "include",
       });
 
-      const responseText = await response.text();
-      console.log("Respuesta del servidor (texto):", responseText);
-
       if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(
-          `Error del servidor: ${response.status} ${response.statusText}\n${responseText}`
+          errorData.message || `Error del servidor: ${response.status}`
         );
       }
 
-      try {
-        const userData = JSON.parse(responseText);
-        setUser(userData);
-      } catch (parseError) {
-        console.error("Error al parsear la respuesta:", parseError);
-        throw new Error("La respuesta del servidor no es un JSON válido");
-      }
+      const userData = await response.json();
+      console.log("Datos del usuario recibidos:", userData);
+      setUser(userData);
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
       setError(error.message);
+      if (error.message.includes("token")) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }

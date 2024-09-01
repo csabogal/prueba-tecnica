@@ -89,12 +89,8 @@ router.put("/change-password", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Contraseña actual incorrecta" });
     }
 
-    // Hashear la nueva contraseña manualmente
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
     // Actualizar la contraseña del usuario
-    user.password = hashedPassword;
+    user.password = newPassword; // Esto activará el middleware pre-save
     await user.save();
 
     console.log("Contraseña actualizada con éxito");
@@ -111,27 +107,27 @@ router.put("/change-password", authMiddleware, async (req, res) => {
 // Ruta de inicio de sesión
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log("Intento de inicio de sesión para:", email);
 
   try {
-    // Verificar si el usuario existe
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "Usuario no encontrado" });
+      console.log("Usuario no encontrado:", email);
+      return res.status(400).json({ message: "Credenciales inválidas" });
     }
 
-    // Comparar la contraseña
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Contraseña incorrecta" });
+      console.log("Contraseña incorrecta para:", email);
+      return res.status(400).json({ message: "Credenciales inválidas" });
     }
 
-    // Generar el token JWT
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
-    // Devolver el token al cliente
-    res.json({ token });
+    console.log("Inicio de sesión exitoso para:", email);
+    res.json({ token, userId: user._id });
   } catch (error) {
     console.error("Error en el inicio de sesión:", error);
     res.status(500).json({ message: "Error en el servidor" });
