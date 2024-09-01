@@ -15,10 +15,13 @@ import {
   DialogActions,
   Snackbar,
   CircularProgress,
+  Box,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import * as XLSX from "xlsx";
+import ProductChart from "./ProductChart";
 
 const Product = () => {
   const [products, setProducts] = useState([]);
@@ -31,6 +34,7 @@ const Product = () => {
     description: "",
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
+  const [showChart, setShowChart] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -99,6 +103,30 @@ const Product = () => {
     setSnackbar({ open: true, message: "Producto eliminado con éxito" });
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: "binary" });
+      const wsname = wb.SheetNames[0];
+      const ws = wb.Sheets[wsname];
+      const data = XLSX.utils.sheet_to_json(ws);
+      const newProducts = data.map((item, index) => ({
+        id: Date.now() + index,
+        name: item.name,
+        description: item.description,
+      }));
+      setProducts([...products, ...newProducts]);
+      setSnackbar({ open: true, message: "Productos cargados con éxito" });
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const toggleChart = () => {
+    setShowChart(!showChart);
+  };
+
   if (loading)
     return (
       <Container
@@ -125,14 +153,28 @@ const Product = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Gestión de Productos
       </Typography>
-      <Button
-        variant="contained"
-        startIcon={<AddIcon />}
-        onClick={() => handleOpenDialog()}
-        sx={{ mb: 2 }}
-      >
-        Añadir Producto
-      </Button>
+      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenDialog()}
+        >
+          Añadir Producto
+        </Button>
+        <Button variant="contained" component="label">
+          Carga Masiva
+          <input
+            type="file"
+            hidden
+            onChange={handleFileUpload}
+            accept=".xlsx, .xls"
+          />
+        </Button>
+        <Button variant="contained" onClick={toggleChart}>
+          {showChart ? "Ocultar Gráfica" : "Mostrar Gráfica"}
+        </Button>
+      </Box>
+      {showChart && <ProductChart products={products} />}
       <Grid container spacing={3}>
         {products.map((product) => (
           <Grid item xs={12} sm={6} md={4} key={product.id}>
