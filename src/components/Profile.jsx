@@ -98,7 +98,7 @@ const Profile = () => {
         throw new Error("No se encontró el token de autenticación");
       }
 
-      const response = await fetch("/api/auth/update", {
+      const response = await fetch("http://localhost:5000/api/auth/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -106,18 +106,17 @@ const Profile = () => {
         },
         body: JSON.stringify(editedUser),
         credentials: "include",
-        mode: "cors",
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
         throw new Error(
-          errorData.message || `Error del servidor: ${response.status}`
+          responseData.message || `Error del servidor: ${response.status}`
         );
       }
 
-      const updatedUser = await response.json();
-      setUser(updatedUser);
+      setUser(responseData);
       setIsEditing(false);
       showNotification("Perfil actualizado con éxito");
     } catch (error) {
