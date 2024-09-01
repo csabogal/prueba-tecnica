@@ -34,23 +34,15 @@ app.use("/api/auth", authRoutes);
 const productRoutes = require("./routes/products");
 app.use("/api/products", productRoutes);
 
+const searchRoutes = require("./routes/Search");
+app.use("/api/search", searchRoutes);
+
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, "/")));
 
 // Manejador para ruta raiz
 app.get("/", (req, res) => {
   res.json({ message: "Servidor funcionando correctamente" });
-});
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../build", "index.html"));
-});
-
-// Manejo de errores
-app.use((err, req, res, next) => {
-  console.error("Error:", err.message);
-  console.error("Stack:", err.stack);
-  res.status(500).json({ message: "Algo salió mal!", error: err.message });
 });
 
 const PORT = process.env.PORT || 5000;

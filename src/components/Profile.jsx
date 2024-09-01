@@ -18,6 +18,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LockIcon from "@mui/icons-material/Lock";
+import SearchIcon from "@mui/icons-material/Search";
 import { Snackbar, Alert } from "@mui/material";
 
 const Profile = () => {
@@ -416,6 +417,15 @@ const Profile = () => {
             gap: 2,
           }}
         >
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<SearchIcon />}
+            onClick={() => navigate("/search")}
+            fullWidth={isMobile}
+          >
+            Buscar
+          </Button>
           <Button
             variant="contained"
             color="primary"
