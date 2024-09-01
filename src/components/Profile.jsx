@@ -148,14 +148,17 @@ const Profile = () => {
         throw new Error("No se encontró el token de autenticación");
       }
 
-      const response = await fetch("/api/auth/change-password", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      const response = await fetch(
+        "http://localhost:5000/api/auth/change-password",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();

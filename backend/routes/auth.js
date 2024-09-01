@@ -89,10 +89,12 @@ router.put("/change-password", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Contraseña actual incorrecta" });
     }
 
-    // Hashear la nueva contraseña
+    // Hashear la nueva contraseña manualmente
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
 
+    // Actualizar la contraseña del usuario
+    user.password = hashedPassword;
     await user.save();
 
     console.log("Contraseña actualizada con éxito");
