@@ -26,17 +26,28 @@ router.post(
       .withMessage("Password must be at least 6 characters long"),
   ],
   async (req, res) => {
+    console.log("Datos recibidos:", req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log("Errores de validación:", errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { username, email, password } = req.body;
 
+    if (!username || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Todos los campos son requeridos" });
+    }
+
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("Intentando crear nuevo usuario:", { username, email });
       const newUser = new User({ username, email, password: hashedPassword });
+      console.log("Usuario creado, intentando guardar...");
       await newUser.save();
+      console.log("Usuario guardado exitosamente");
 
       const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
         expiresIn: "1h",
@@ -44,8 +55,16 @@ router.post(
 
       res.status(201).json({ token });
     } catch (error) {
-      console.error("Error al registrar el usuario:", error);
-      res.status(500).json({ message: "Error al registrar el usuario" });
+      console.error("Error detallado en el registro de usuario:", error);
+      if (error.code === 11000) {
+        return res
+          .status(400)
+          .json({ message: "El email o nombre de usuario ya está en uso" });
+      }
+      res.status(500).json({
+        message: "Error al registrar el usuario",
+        error: error.message,
+      });
     }
   }
 );
@@ -102,10 +121,12 @@ router.put("/change-password", authMiddleware, async (req, res) => {
     }
 
     // Actualizar la contraseña del usuario
-    user.password = newPassword; // Esto activará el middleware pre-save
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
     await user.save();
 
     console.log("Contraseña actualizada con éxito");
+    console.log("Nueva contraseña hasheada:", hashedNewPassword);
     res.json({ message: "Contraseña actualizada con éxito" });
   } catch (error) {
     console.error("Error detallado al cambiar la contraseña:", error);
@@ -134,10 +155,16 @@ router.post(
     try {
       const user = await User.findOne({ email });
       if (!user) {
+        console.log("Usuario no encontrado:", email);
         return res.status(400).json({ message: "Credenciales inválidas" });
       }
 
+      console.log("Contraseña almacenada (hash):", user.password);
+      console.log("Contraseña proporcionada:", password);
+
       const isMatch = await bcrypt.compare(password, user.password);
+      console.log("¿Contraseña coincide?", isMatch);
+
       if (!isMatch) {
         return res.status(400).json({ message: "Credenciales inválidas" });
       }

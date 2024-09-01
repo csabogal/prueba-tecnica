@@ -24,8 +24,11 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("MongoDB conectado"))
-  .catch((err) => console.error("Error al conectar a MongoDB:", err));
+  .then(() => console.log("MongoDB conectado exitosamente"))
+  .catch((err) => {
+    console.error("Error detallado al conectar a MongoDB:", err);
+    process.exit(1);
+  });
 
 // Rutas
 const authRoutes = require("./routes/auth");

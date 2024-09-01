@@ -47,15 +47,20 @@ const Register = () => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        setOpenSuccessModal(true);
+      if (!response.ok) {
+        console.error("Error de registro:", data);
+        if (data.errors) {
+          // Manejar errores de validación
+          const errorMessages = data.errors.map((err) => err.msg).join(", ");
+          setErrorMessage(`Errores de validación: ${errorMessages}`);
+        } else {
+          setErrorMessage(data.message || "Error al registrar el usuario.");
+        }
       } else {
-        setErrorMessage(
-          data.message ||
-            "Error al registrar el usuario. Por favor, verifica los datos e inténtalo de nuevo."
-        );
+        setOpenSuccessModal(true);
       }
     } catch (error) {
+      console.error("Error detallado en el registro:", error);
       setErrorMessage(
         "Error al registrar el usuario. Por favor, verifica tu conexión e inténtalo de nuevo."
       );
