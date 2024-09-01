@@ -17,6 +17,8 @@ import {
   CircularProgress,
   Box,
   Alert,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -25,6 +27,9 @@ import * as XLSX from "xlsx";
 import ProductChart from "./ProductChart";
 
 const Product = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -363,19 +368,27 @@ const Product = () => {
     );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom align="center">
         Gestión de Productos
       </Typography>
-      <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: 2,
+        }}
+      >
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
+          fullWidth={isMobile}
         >
           Añadir Producto
         </Button>
-        <Button variant="contained" component="label">
+        <Button variant="contained" component="label" fullWidth={isMobile}>
           Carga Masiva
           <input
             type="file"
@@ -384,30 +397,48 @@ const Product = () => {
             accept=".xlsx, .xls"
           />
         </Button>
-        <Button variant="contained" onClick={toggleChart}>
+        <Button variant="contained" onClick={toggleChart} fullWidth={isMobile}>
           {showChart ? "Ocultar Gráfica" : "Mostrar Gráfica"}
+        </Button>
+        <Button
+          variant="outlined"
+          component={Link}
+          to="/profile"
+          sx={{ marginLeft: isMobile ? 0 : "auto" }}
+          fullWidth={isMobile}
+        >
+          Volver al Perfil
         </Button>
       </Box>
       {showChart && <ProductChart products={products} />}
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {products.map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product.id}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={product._id}>
             <Card>
               <CardContent>
-                <Typography variant="h6" component="h2">
+                <Typography variant="h6" component="h2" noWrap>
                   {product.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    mb: 1,
+                    height: "3em",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {product.description}
                 </Typography>
-                <Typography variant="body2" color="text.primary" sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.primary">
                   Categoría: {product.category}
                 </Typography>
-                <Typography variant="body2" color="text.primary" sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.primary">
                   Cantidad: {product.quantity}
                 </Typography>
               </CardContent>
-              <CardActions>
+              <CardActions sx={{ justifyContent: "space-between" }}>
                 <Button
                   size="small"
                   startIcon={<EditIcon />}
@@ -419,6 +450,7 @@ const Product = () => {
                   size="small"
                   startIcon={<DeleteIcon />}
                   onClick={() => handleDeleteProduct(product._id)}
+                  color="error"
                 >
                   Eliminar
                 </Button>
