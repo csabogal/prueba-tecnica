@@ -23,7 +23,7 @@ router.post(
       }),
     body("password")
       .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters long"),
+      .withMessage("La contraseña debe tener al menos 6 caracteres"),
   ],
   async (req, res) => {
     console.log("Datos recibidos:", req.body);
