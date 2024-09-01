@@ -6,6 +6,11 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
 import "./ProductChart.css";
 
@@ -25,15 +30,24 @@ const COLORS = [
 ];
 
 const ProductChart = ({ products }) => {
-  const data = products.reduce((acc, product) => {
-    const existingProduct = acc.find((item) => item.name === product.name);
-    if (existingProduct) {
-      existingProduct.value++;
-    } else {
-      acc.push({ name: product.name, value: 1 });
-    }
+  // Análisis de categorías
+  const categoryData = products.reduce((acc, product) => {
+    acc[product.category] = (acc[product.category] || 0) + 1;
+    return acc;
+  }, {});
+
+  const categoryChartData = Object.entries(categoryData).map(
+    ([name, value]) => ({ name, value })
+  );
+
+  // Análisis de inventario (asumiendo que cada producto tiene una cantidad)
+  const inventoryData = products.reduce((acc, product) => {
+    acc.push({ name: product.name, quantity: product.quantity || 0 });
     return acc;
   }, []);
+
+  // Ordenar inventario de menor a mayor cantidad
+  inventoryData.sort((a, b) => a.quantity - b.quantity);
 
   const renderCustomizedLabel = ({
     cx,
@@ -63,20 +77,22 @@ const ProductChart = ({ products }) => {
 
   return (
     <div className="product-chart-container">
-      <h3 className="product-chart-title">Distribución de Productos</h3>
-      <ResponsiveContainer width="100%" height={400}>
+      <h3 className="product-chart-title">Análisis de Productos</h3>
+
+      <h4>Distribución de Categorías</h4>
+      <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
-            data={data}
+            data={categoryChartData}
             cx="50%"
             cy="50%"
             labelLine={false}
             label={renderCustomizedLabel}
-            outerRadius={150}
+            outerRadius={100}
             fill="#8884d8"
             dataKey="value"
           >
-            {data.map((entry, index) => (
+            {categoryChartData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
@@ -84,8 +100,23 @@ const ProductChart = ({ products }) => {
             ))}
           </Pie>
           <Tooltip />
-          <Legend layout="vertical" align="right" verticalAlign="middle" />
+          <Legend />
         </PieChart>
+      </ResponsiveContainer>
+
+      <h4>Análisis de Inventario</h4>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={inventoryData.slice(0, 10)} // Mostrar solo los 10 productos con menor cantidad
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="quantity" fill="#8884d8" />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

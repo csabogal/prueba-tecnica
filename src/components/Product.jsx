@@ -30,10 +30,11 @@ const Product = () => {
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentProduct, setCurrentProduct] = useState({
-    id: null,
+    _id: null,
     name: "",
     description: "",
     category: "",
+    quantity: 0,
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [showChart, setShowChart] = useState(false);
@@ -65,21 +66,48 @@ const Product = () => {
     }
   };
 
-  const handleOpenDialog = (
-    product = { id: null, name: "", description: "", category: "" }
-  ) => {
-    setCurrentProduct(product);
+  const handleOpenDialog = (product = null) => {
+    if (product) {
+      setCurrentProduct({
+        _id: product._id,
+        name: product.name || "",
+        description: product.description || "",
+        category: product.category || "",
+        quantity: product.quantity || 0,
+      });
+    } else {
+      setCurrentProduct({
+        _id: null,
+        name: "",
+        description: "",
+        category: "",
+        quantity: 0,
+      });
+    }
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setCurrentProduct({ id: null, name: "", description: "", category: "" });
+    setCurrentProduct({
+      _id: null,
+      name: "",
+      description: "",
+      category: "",
+      quantity: 0,
+    });
   };
 
   const handleSaveProduct = async () => {
     try {
       let savedProduct;
+      const productData = {
+        name: currentProduct.name,
+        description: currentProduct.description,
+        category: currentProduct.category,
+        quantity: currentProduct.quantity,
+      };
+
       if (currentProduct._id) {
         // Actualizar producto existente
         savedProduct = await fetch(
@@ -90,12 +118,12 @@ const Product = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-            body: JSON.stringify(currentProduct),
+            body: JSON.stringify(productData),
           }
         );
       } else {
         // Añadir nuevo producto
-        savedProduct = await insertSingleProduct(currentProduct);
+        savedProduct = await insertSingleProduct(productData);
       }
 
       if (!savedProduct.ok) {
@@ -190,7 +218,12 @@ const Product = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify(product),
+      body: JSON.stringify({
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        quantity: product.quantity,
+      }),
     });
 
     if (!response.ok) {
@@ -251,6 +284,7 @@ const Product = () => {
           name: item.name.trim(),
           description: item.description.trim(),
           category: item.category.trim(),
+          quantity: item.quantity || 0,
         }));
 
         let message = "";
@@ -369,6 +403,9 @@ const Product = () => {
                 <Typography variant="body2" color="text.primary" sx={{ mt: 1 }}>
                   Categoría: {product.category}
                 </Typography>
+                <Typography variant="body2" color="text.primary" sx={{ mt: 1 }}>
+                  Cantidad: {product.quantity}
+                </Typography>
               </CardContent>
               <CardActions>
                 <Button
@@ -431,6 +468,19 @@ const Product = () => {
               setCurrentProduct({
                 ...currentProduct,
                 category: e.target.value,
+              })
+            }
+          />
+          <TextField
+            margin="dense"
+            label="Cantidad"
+            type="number"
+            fullWidth
+            value={currentProduct.quantity}
+            onChange={(e) =>
+              setCurrentProduct({
+                ...currentProduct,
+                quantity: parseInt(e.target.value, 10) || 0,
               })
             }
           />
