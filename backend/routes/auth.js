@@ -2,41 +2,53 @@ const express = require("express");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 
 // Ruta de registro
-router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
-
-  console.log("Datos recibidos:", { username, email, password });
-
-  try {
-    // Verificar si el usuario ya existe
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      console.log("El usuario ya existe:", existingUser);
-      return res.status(400).json({ message: "El usuario ya existe" });
+router.post(
+  "/register",
+  [
+    body("username").trim().notEmpty().withMessage("Username is required"),
+    body("email")
+      .isEmail()
+      .withMessage("Invalid email")
+      .custom(async (email) => {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+          throw new Error("Email already in use");
+        }
+      }),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters long"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    // Crear un nuevo usuario
-    const newUser = new User({ username, email, password });
-    await newUser.save();
+    const { username, email, password } = req.body;
 
-    // Crear un token JWT
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new User({ username, email, password: hashedPassword });
+      await newUser.save();
 
-    console.log("Usuario registrado con éxito:", newUser);
+      const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
 
-    res.status(201).json({ token });
-  } catch (error) {
-    console.error("Error al registrar el usuario:", error);
-    res.status(500).json({ message: "Error al registrar el usuario" });
+      res.status(201).json({ token });
+    } catch (error) {
+      console.error("Error al registrar el usuario:", error);
+      res.status(500).json({ message: "Error al registrar el usuario" });
+    }
   }
-});
+);
 
 // Ruta de actualización de perfil
 router.put("/update", authMiddleware, async (req, res) => {
@@ -105,34 +117,42 @@ router.put("/change-password", authMiddleware, async (req, res) => {
 });
 
 // Ruta de inicio de sesión
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  console.log("Intento de inicio de sesión para:", email);
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      console.log("Usuario no encontrado:", email);
-      return res.status(400).json({ message: "Credenciales inválidas" });
+router.post(
+  "/login",
+  [
+    body("email").isEmail().withMessage("Invalid email"),
+    body("password").notEmpty().withMessage("Password is required"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log("Contraseña incorrecta para:", email);
-      return res.status(400).json({ message: "Credenciales inválidas" });
+    const { email, password } = req.body;
+
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(400).json({ message: "Credenciales inválidas" });
+      }
+
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Credenciales inválidas" });
+      }
+
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+
+      res.json({ token, userId: user._id });
+    } catch (error) {
+      console.error("Error en el inicio de sesión:", error);
+      res.status(500).json({ message: "Error en el servidor" });
     }
-
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    console.log("Inicio de sesión exitoso para:", email);
-    res.json({ token, userId: user._id });
-  } catch (error) {
-    console.error("Error en el inicio de sesión:", error);
-    res.status(500).json({ message: "Error en el servidor" });
   }
-});
+);
 
 // Ruta para obtener el perfil del usuario
 router.get("/profile", authMiddleware, async (req, res) => {

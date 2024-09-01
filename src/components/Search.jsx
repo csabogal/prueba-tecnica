@@ -136,6 +136,11 @@ const Search = () => {
           {error}
         </Alert>
       )}
+      {!error && results.length === 0 && query && (
+        <Alert severity="info" sx={{ mt: 2, textAlign: "center" }}>
+          No se encontraron resultados.
+        </Alert>
+      )}
       <Grid container spacing={2} sx={{ mt: 2 }}>
         {results.map((result) => (
           <Grid item xs={12} sm={6} md={4} key={result._id}>

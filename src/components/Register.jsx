@@ -50,10 +50,15 @@ const Register = () => {
       if (response.ok) {
         setOpenSuccessModal(true);
       } else {
-        setErrorMessage(data.message);
+        setErrorMessage(
+          data.message ||
+            "Error al registrar el usuario. Por favor, verifica los datos e inténtalo de nuevo."
+        );
       }
     } catch (error) {
-      setErrorMessage("Error al registrar el usuario");
+      setErrorMessage(
+        "Error al registrar el usuario. Por favor, verifica tu conexión e inténtalo de nuevo."
+      );
     }
   };
 
