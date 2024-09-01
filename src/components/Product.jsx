@@ -45,11 +45,21 @@ const Product = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Inicializar con un array vacío en lugar de productos de ejemplo
-      setProducts([]);
+      const response = await fetch("http://localhost:5000/api/products", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al cargar los productos");
+      }
+      const data = await response.json();
+      console.log("Productos obtenidos:", data);
+      setProducts(data);
     } catch (err) {
-      setError("Error al cargar los productos");
-      console.error(err);
+      setError(err.message || "Error al cargar los productos");
+      console.error("Error al obtener productos:", err);
     } finally {
       setLoading(false);
     }
@@ -67,34 +77,136 @@ const Product = () => {
     setCurrentProduct({ id: null, name: "", description: "", category: "" });
   };
 
-  const handleSaveProduct = () => {
-    if (currentProduct.id) {
-      // Actualizar producto existente
-      setProducts(
-        products.map((p) => (p.id === currentProduct.id ? currentProduct : p))
+  const handleSaveProduct = async () => {
+    try {
+      let savedProduct;
+      if (currentProduct._id) {
+        // Actualizar producto existente
+        savedProduct = await fetch(
+          `http://localhost:5000/api/products/${currentProduct._id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(currentProduct),
+          }
+        );
+      } else {
+        // Añadir nuevo producto
+        savedProduct = await insertSingleProduct(currentProduct);
+      }
+
+      if (!savedProduct.ok) {
+        const errorData = await savedProduct.json();
+        throw new Error(errorData.message || "Error al guardar el producto");
+      }
+
+      const updatedProduct = await savedProduct.json();
+
+      setProducts((prevProducts) =>
+        currentProduct._id
+          ? prevProducts.map((p) =>
+              p._id === updatedProduct._id ? updatedProduct : p
+            )
+          : [...prevProducts, updatedProduct]
       );
-    } else {
-      // Añadir nuevo producto
-      setProducts([...products, { ...currentProduct, id: Date.now() }]);
+
+      handleCloseDialog();
+      setSnackbar({
+        open: true,
+        message: `Producto ${
+          currentProduct._id ? "actualizado" : "añadido"
+        } con éxito`,
+      });
+    } catch (error) {
+      console.error("Error al guardar el producto:", error);
+      setSnackbar({
+        open: true,
+        message: `Error al ${
+          currentProduct._id ? "actualizar" : "añadir"
+        } el producto: ${error.message}`,
+      });
     }
-    handleCloseDialog();
-    setSnackbar({
-      open: true,
-      message: `Producto ${
-        currentProduct.id ? "actualizado" : "añadido"
-      } con éxito`,
+  };
+
+  const handleDeleteProduct = async (id) => {
+    try {
+      if (!id) {
+        throw new Error("ID del producto no definido");
+      }
+      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al eliminar el producto");
+      }
+      setProducts(products.filter((p) => p._id !== id));
+      setSnackbar({ open: true, message: "Producto eliminado con éxito" });
+    } catch (error) {
+      console.error("Error al eliminar el producto:", error);
+      setSnackbar({
+        open: true,
+        message: `Error al eliminar el producto: ${error.message}`,
+      });
+    }
+  };
+
+  const insertProductsIntoDatabase = async (products) => {
+    try {
+      const response = await fetch("http://localhost:5000/api/products/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(products),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Error al insertar productos en la base de datos"
+        );
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  };
+
+  const insertSingleProduct = async (product) => {
+    const response = await fetch("http://localhost:5000/api/products", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(product),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || "Error al insertar el producto en la base de datos"
+      );
+    }
+
+    return response;
   };
 
-  const handleDeleteProduct = (id) => {
-    setProducts(products.filter((p) => p.id !== id));
-    setSnackbar({ open: true, message: "Producto eliminado con éxito" });
-  };
-
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const bstr = evt.target.result;
         const wb = XLSX.read(bstr, { type: "binary" });
@@ -136,20 +248,27 @@ const Product = () => {
         });
 
         const newProducts = validatedData.map((item) => ({
-          id: Date.now() + Math.random(),
           name: item.name.trim(),
           description: item.description.trim(),
           category: item.category.trim(),
         }));
 
-        if (newProducts.length > 0) {
-          setProducts((prevProducts) => [...prevProducts, ...newProducts]);
-        }
-
         let message = "";
         if (newProducts.length > 0) {
-          message += `${newProducts.length} productos cargados con éxito. `;
+          try {
+            const insertedProducts = await insertProductsIntoDatabase(
+              newProducts
+            );
+            setProducts((prevProducts) => [
+              ...prevProducts,
+              ...insertedProducts,
+            ]);
+            message += `${insertedProducts.length} productos cargados con éxito. `;
+          } catch (error) {
+            message += "Error al insertar productos en la base de datos. ";
+          }
         }
+
         if (errors.length > 0) {
           message += `Se encontraron ${errors.length} errores: ${errors.join(
             "; "
@@ -262,7 +381,7 @@ const Product = () => {
                 <Button
                   size="small"
                   startIcon={<DeleteIcon />}
-                  onClick={() => handleDeleteProduct(product.id)}
+                  onClick={() => handleDeleteProduct(product._id)}
                 >
                   Eliminar
                 </Button>

@@ -31,6 +31,9 @@ mongoose
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
 
+const productRoutes = require("./routes/products");
+app.use("/api/products", productRoutes);
+
 // Servir archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, "/")));
 
