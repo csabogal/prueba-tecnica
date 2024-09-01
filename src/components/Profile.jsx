@@ -36,6 +36,7 @@ const Profile = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("sm"));
+  const [apiUserData, setApiUserData] = useState(null);
 
   const showNotification = (message, severity = "success") => {
     setSnackbarMessage(message);
@@ -68,6 +69,11 @@ const Profile = () => {
       const userData = await response.json();
       console.log("Datos del usuario recibidos:", userData);
       setUser(userData);
+
+      // Obtener datos adicionales de la API externa
+      const apiData = await fetchUserDataFromAPI(userData.id || 1);
+      const validatedApiData = validateAndSanitizeUserData(apiData);
+      setApiUserData(validatedApiData);
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
       setError(error.message);
@@ -176,6 +182,39 @@ const Profile = () => {
         "error"
       );
     }
+  };
+
+  const fetchUserDataFromAPI = async (userId) => {
+    try {
+      const response = await fetch(
+        `https://jsonplaceholder.typicode.com/users/${userId}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data from API");
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching user data from API:", error);
+      throw error;
+    }
+  };
+
+  const validateAndSanitizeUserData = (data) => {
+    if (typeof data !== "object" || data === null) {
+      throw new Error("Invalid data format");
+    }
+
+    // Sanitizar los datos
+    const sanitizedData = {
+      id: data.id,
+      name: data.name ? data.name.replace(/<[^>]*>?/gm, "") : "",
+      email: data.email ? data.email.replace(/<[^>]*>?/gm, "") : "",
+      phone: data.phone ? data.phone.replace(/[^\d+()-]/g, "") : "",
+      website: data.website ? data.website.replace(/<[^>]*>?/gm, "") : "",
+    };
+
+    return sanitizedData;
   };
 
   if (loading) {
@@ -404,6 +443,19 @@ const Profile = () => {
                 >
                   {user?.biography || "No hay biografía disponible"}
                 </Typography>
+                {apiUserData && (
+                  <Box sx={{ mt: 4 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Información adicional del usuario
+                    </Typography>
+                    <Typography variant="body1">
+                      Teléfono: {apiUserData.phone}
+                    </Typography>
+                    <Typography variant="body1">
+                      Sitio web: {apiUserData.website}
+                    </Typography>
+                  </Box>
+                )}
               </>
             )}
           </Grid>

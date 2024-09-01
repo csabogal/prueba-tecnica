@@ -40,6 +40,7 @@ const Product = () => {
     description: "",
     category: "",
     quantity: 0,
+    price: 0,
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: "" });
   const [showChart, setShowChart] = useState(false);
@@ -51,18 +52,41 @@ const Product = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/products", {
+      // Obtener productos locales
+      const localResponse = await fetch("http://localhost:5000/api/products", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error al cargar los productos");
+      if (!localResponse.ok) {
+        const errorData = await localResponse.json();
+        throw new Error(
+          errorData.message || "Error al cargar los productos locales"
+        );
       }
-      const data = await response.json();
-      console.log("Productos obtenidos:", data);
-      setProducts(data);
+      const localData = await localResponse.json();
+
+      // Obtener productos de la API externa
+      const externalResponse = await fetch("https://fakestoreapi.com/products");
+      if (!externalResponse.ok) {
+        throw new Error("Error al cargar los productos de la API externa");
+      }
+      const externalData = await externalResponse.json();
+
+      // Combinar y formatear los productos
+      const combinedProducts = [
+        ...localData,
+        ...externalData.map((product) => ({
+          _id: `external_${product.id}`,
+          name: product.title,
+          description: product.description,
+          category: product.category,
+          quantity: Math.floor(Math.random() * 100), // Cantidad aleatoria
+          price: product.price,
+        })),
+      ];
+
+      setProducts(combinedProducts);
     } catch (err) {
       setError(err.message || "Error al cargar los productos");
       console.error("Error al obtener productos:", err);
@@ -79,6 +103,7 @@ const Product = () => {
         description: product.description || "",
         category: product.category || "",
         quantity: product.quantity || 0,
+        price: product.price || 0,
       });
     } else {
       setCurrentProduct({
@@ -87,6 +112,7 @@ const Product = () => {
         description: "",
         category: "",
         quantity: 0,
+        price: 0,
       });
     }
     setOpenDialog(true);
@@ -100,6 +126,7 @@ const Product = () => {
       description: "",
       category: "",
       quantity: 0,
+      price: 0,
     });
   };
 
@@ -111,6 +138,7 @@ const Product = () => {
         description: currentProduct.description,
         category: currentProduct.category,
         quantity: currentProduct.quantity,
+        price: currentProduct.price,
       };
 
       if (currentProduct._id) {
@@ -228,6 +256,7 @@ const Product = () => {
         description: product.description,
         category: product.category,
         quantity: product.quantity,
+        price: product.price,
       }),
     });
 
@@ -290,6 +319,7 @@ const Product = () => {
           description: item.description.trim(),
           category: item.category.trim(),
           quantity: item.quantity || 0,
+          price: item.price || 0,
         }));
 
         let message = "";
@@ -437,12 +467,16 @@ const Product = () => {
                 <Typography variant="body2" color="text.primary">
                   Cantidad: {product.quantity}
                 </Typography>
+                <Typography variant="body2" color="text.primary">
+                  Precio: ${product.price.toFixed(2)}
+                </Typography>
               </CardContent>
               <CardActions sx={{ justifyContent: "space-between" }}>
                 <Button
                   size="small"
                   startIcon={<EditIcon />}
                   onClick={() => handleOpenDialog(product)}
+                  disabled={product._id.startsWith("external_")}
                 >
                   Editar
                 </Button>
@@ -451,6 +485,7 @@ const Product = () => {
                   startIcon={<DeleteIcon />}
                   onClick={() => handleDeleteProduct(product._id)}
                   color="error"
+                  disabled={product._id.startsWith("external_")}
                 >
                   Eliminar
                 </Button>
@@ -461,7 +496,7 @@ const Product = () => {
       </Grid>
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
-          {currentProduct.id ? "Editar Producto" : "Añadir Producto"}
+          {currentProduct._id ? "Editar Producto" : "Añadir Producto"}
         </DialogTitle>
         <DialogContent>
           <TextField
@@ -513,6 +548,19 @@ const Product = () => {
               setCurrentProduct({
                 ...currentProduct,
                 quantity: parseInt(e.target.value, 10) || 0,
+              })
+            }
+          />
+          <TextField
+            margin="dense"
+            label="Precio"
+            type="number"
+            fullWidth
+            value={currentProduct.price}
+            onChange={(e) =>
+              setCurrentProduct({
+                ...currentProduct,
+                price: parseFloat(e.target.value) || 0,
               })
             }
           />
