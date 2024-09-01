@@ -1,167 +1,216 @@
 import React, { useState, useEffect } from "react";
-import { read, utils } from "xlsx";
-import ProductChart from "./ProductChart";
-import { Box, Button, TextField, Typography } from "@mui/material";
-import "./Product.css";
+import { Link } from "react-router-dom";
+import {
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  CircularProgress,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const Product = () => {
   const [products, setProducts] = useState([]);
-  const [newProductName, setNewProductName] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingProductId, setEditingProductId] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState({
+    id: null,
+    name: "",
+    description: "",
+  });
+  const [snackbar, setSnackbar] = useState({ open: false, message: "" });
 
   useEffect(() => {
-    const storedProducts = localStorage.getItem("products");
-    if (storedProducts) {
-      setProducts(JSON.parse(storedProducts));
-    }
+    fetchProducts();
   }, []);
 
-  const handleAddProduct = (event) => {
-    event.preventDefault();
-    if (newProductName.trim() === "") {
-      setErrorMessage("El nombre del producto no puede estar vacío");
-      return;
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      // Simular una llamada a la API
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const mockProducts = [
+        {
+          id: 1,
+          name: "Producto 1",
+          description: "Descripción del producto 1",
+        },
+        {
+          id: 2,
+          name: "Producto 2",
+          description: "Descripción del producto 2",
+        },
+        // ... más productos
+      ];
+      setProducts(mockProducts);
+    } catch (err) {
+      setError("Error al cargar los productos");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    const newProduct = { id: Date.now(), name: newProductName };
-    const updatedProducts = [...products, newProduct];
-    setProducts(updatedProducts);
-    setNewProductName("");
-    localStorage.setItem("products", JSON.stringify(updatedProducts));
   };
 
-  const handleEditProduct = (id) => {
-    const productToEdit = products.find((p) => p.id === id);
-    if (productToEdit) {
-      setNewProductName(productToEdit.name);
-      setIsEditing(true);
-      setEditingProductId(id);
-    }
+  const handleOpenDialog = (
+    product = { id: null, name: "", description: "" }
+  ) => {
+    setCurrentProduct(product);
+    setOpenDialog(true);
   };
 
-  const handleSaveEdit = (event) => {
-    event.preventDefault();
-    const updatedProducts = products.map((p) =>
-      p.id === editingProductId ? { ...p, name: newProductName } : p
-    );
-    setProducts(updatedProducts);
-    setIsEditing(false);
-    setNewProductName("");
-    setEditingProductId(null);
-    localStorage.setItem("products", JSON.stringify(updatedProducts));
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setCurrentProduct({ id: null, name: "", description: "" });
+  };
+
+  const handleSaveProduct = () => {
+    if (currentProduct.id) {
+      // Actualizar producto existente
+      setProducts(
+        products.map((p) => (p.id === currentProduct.id ? currentProduct : p))
+      );
+    } else {
+      // Añadir nuevo producto
+      setProducts([...products, { ...currentProduct, id: Date.now() }]);
+    }
+    handleCloseDialog();
+    setSnackbar({
+      open: true,
+      message: `Producto ${
+        currentProduct.id ? "actualizado" : "añadido"
+      } con éxito`,
+    });
   };
 
   const handleDeleteProduct = (id) => {
-    const updatedProducts = products.filter((p) => p.id !== id);
-    setProducts(updatedProducts);
-    localStorage.setItem("products", JSON.stringify(updatedProducts));
+    setProducts(products.filter((p) => p.id !== id));
+    setSnackbar({ open: true, message: "Producto eliminado con éxito" });
   };
 
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-  };
+  if (loading)
+    return (
+      <Container
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Container>
+    );
 
-  const handleUpload = (event) => {
-    event.preventDefault();
-    if (!selectedFile) {
-      setErrorMessage("Por favor, seleccione un archivo.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = utils.sheet_to_json(worksheet);
-
-        // Validar datos
-        const newProducts = json.map((item) => {
-          if (!item.name) {
-            throw new Error("El archivo contiene productos sin nombre.");
-          }
-          return {
-            id: Date.now() + Math.random(),
-            name: item.name,
-          };
-        });
-
-        // Evitar duplicados
-        const uniqueProducts = newProducts.filter(
-          (newProduct) =>
-            !products.some((product) => product.name === newProduct.name)
-        );
-
-        const updatedProducts = [...products, ...uniqueProducts];
-        setProducts(updatedProducts);
-        localStorage.setItem("products", JSON.stringify(updatedProducts));
-        setErrorMessage(null);
-      } catch (error) {
-        setErrorMessage(error.message);
-      }
-    };
-    reader.readAsArrayBuffer(selectedFile);
-  };
+  if (error)
+    return (
+      <Container>
+        <Typography color="error">{error}</Typography>
+      </Container>
+    );
 
   return (
-    <div className="form-container">
-      <h2>Gestión de Productos</h2>
-      <h3>Agregar Nuevo Producto</h3>
-      <form onSubmit={handleAddProduct}>
-        <div>
-          <label htmlFor="newProductName">Nombre del producto:</label>
-          <input
-            type="text"
-            id="newProductName"
-            value={newProductName}
-            onChange={(e) => setNewProductName(e.target.value)}
-            placeholder="Nombre del producto"
-            required
-          />
-        </div>
-        <button type="submit">Agregar Producto</button>
-      </form>
-      <h3>Cargar Productos desde Excel</h3>
-      <form onSubmit={handleUpload}>
-        <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-        <button type="submit">Cargar</button>
-      </form>
-      {errorMessage && <p className="error">{errorMessage}</p>}
-      <h3>Lista de Productos</h3>
-      <ul className="product-list">
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Gestión de Productos
+      </Typography>
+      <Button
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={() => handleOpenDialog()}
+        sx={{ mb: 2 }}
+      >
+        Añadir Producto
+      </Button>
+      <Grid container spacing={3}>
         {products.map((product) => (
-          <li key={product.id}>
-            <span>{product.name}</span>
-            <button onClick={() => handleEditProduct(product.id)}>
-              Editar
-            </button>
-            <button onClick={() => handleDeleteProduct(product.id)}>
-              Eliminar
-            </button>
-          </li>
+          <Grid item xs={12} sm={6} md={4} key={product.id}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" component="h2">
+                  {product.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {product.description}
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button
+                  size="small"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleOpenDialog(product)}
+                >
+                  Editar
+                </Button>
+                <Button
+                  size="small"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => handleDeleteProduct(product.id)}
+                >
+                  Eliminar
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
         ))}
-      </ul>
-      {isEditing && (
-        <form onSubmit={handleSaveEdit}>
-          <div>
-            <label htmlFor="editProductName">Nombre del producto:</label>
-            <input
-              type="text"
-              id="editProductName"
-              value={newProductName}
-              onChange={(e) => setNewProductName(e.target.value)}
-              placeholder="Nombre del producto"
-              required
-            />
-          </div>
-          <button type="submit">Guardar Cambios</button>
-        </form>
-      )}
-      <ProductChart products={products} />
-    </div>
+      </Grid>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>
+          {currentProduct.id ? "Editar Producto" : "Añadir Producto"}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Nombre del Producto"
+            type="text"
+            fullWidth
+            value={currentProduct.name}
+            onChange={(e) =>
+              setCurrentProduct({ ...currentProduct, name: e.target.value })
+            }
+          />
+          <TextField
+            margin="dense"
+            label="Descripción"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            value={currentProduct.description}
+            onChange={(e) =>
+              setCurrentProduct({
+                ...currentProduct,
+                description: e.target.value,
+              })
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancelar</Button>
+          <Button onClick={handleSaveProduct} variant="contained">
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
+    </Container>
   );
 };
 

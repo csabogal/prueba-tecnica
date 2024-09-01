@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  biography: {
+    type: String,
+    default: "",
+  },
 });
 
 // Middleware para hashear la contraseña antes de guardar el usuario
