@@ -32,10 +32,17 @@ verifica que tengas instalado Node.js (v14 o superior) de lo contrario ve a la p
     ```bash
     npm install
     ```
+3. Crea un archivo `.env` en el directorio `prueba-tecnica/backend` con el siguiente contenido:
+    ```env
+    MONGO_URI=mongodb+srv://csabogal:Colombia.2024*@cluster0.jrqym.mongodb.net/
+    JWT_SECRET=un_secreto_largo_y_aleatorio_para_tus_tokens
+    PORT=5000
+    ```
 
-3. Inicia el servidor:
+
+4. Inicia el servidor:
     ```bash
-    node server.js
+    npm run dev
     ```
 
 ### Configuración del Frontend
