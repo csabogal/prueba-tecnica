@@ -15,37 +15,33 @@ El presente proyecto describe la construcción y funcionamiento de una aplicaci�
 
 ### Clonar el Repositorio
 
-````bash
-git clone https://github.com/csabogal/prueba-tecnica.git
-cd prueba-tecnica```
 
+```bash
+git clone https://github.com/csabogal/prueba-tecnica.git
+cd prueba-tecnica
+```
 
 ### Configuración del Backend
 1. Navega al directorio del backend:
     ```bash
-    cd backend
+    cd /prueba-tecnica/backend
     ```
+verifica que tengas instalado Node.js (v14 o superior) de lo contrario ve a la página para descargarlo
 
 2. Instala las dependencias:
     ```bash
     npm install
     ```
 
-3. Crea un archivo `.env` en el directorio `backend` con el siguiente contenido:
-    ```env
-    MONGO_URI=mongodb://localhost:27017/prueba-tecnica
-    JWT_SECRET=tu_secreto_jwt
-    ```
-
-4. Inicia el servidor:
+3. Inicia el servidor:
     ```bash
-    npm run dev
+    node server.js
     ```
 
 ### Configuración del Frontend
 1. Navega al directorio del frontend:
     ```bash
-    cd ../
+    cd ../prueba-tecnica
     ```
 
 2. Instala las dependencias:
@@ -63,8 +59,8 @@ El proyecto utiliza MongoDB como base de datos. Asegúrate de tener MongoDB inst
 
 **La conexión a la base de datos se configura en el archivo `.env` del backend.**
 ```javascript
-   MONGO_URI=mongodb+srv://csabogal:*****@cluster0.jrqym.mongodb.net/
-````
+   MONGO_URI=mongodb+srv://csabogal:*****@cluster0.jrqym. mongodb.net/
+```
 
 Luego se importa la dependencia para configurarla en el server del backend
 
@@ -84,8 +80,14 @@ mongoose
 
 ## Integración de las API's Externas
 
-**- jsonplaceholder api:** - URL: https://jsonplaceholder.typicode.com/ - Uso: Para obtener información adicional del usuario en el perfil. - Endpoint utilizado: https://jsonplaceholder.typicode.com/users/{userId}
-**- Fake Store API:** - URL: https://fakestoreapi.com/ - Uso: Para poblar el módulo de productos con datos adicionales. - Endpoint utilizado: https://fakestoreapi.com/products
+**jsonplaceholder api:** 
+- URL: https://jsonplaceholder.typicode.com/ 
+- Uso: Para obtener información adicional del usuario en el perfil. 
+- Endpoint utilizado: https://jsonplaceholder.typicode.com/users/{userId}
+**Fake Store API:** 
+- URL: https://fakestoreapi.com/ 
+- Uso: Para poblar el módulo de productos con datos adicionales. 
+- Endpoint utilizado: https://fakestoreapi.com/products
 
 Estas APIs gratuitas nos han permitido enriquecer la funcionalidad de nuestra aplicación, proporcionando datos de ejemplo para el perfil de usuario y para el catálogo de productos.
 
@@ -128,11 +130,17 @@ router.post("/bulk", authMiddleware, async (req, res) => {
 });
 ```
 
-####Requisitos Previos
+### Requisitos Previos
 
 - Asegúrate de tener el servidor backend en funcionamiento.
 - Asegúrate de tener un archivo Excel con los datos de los productos que deseas cargar.
-  **Formato del Archivo Excel** - El archivo Excel debe tener las siguientes columnas: - **name:** Nombre del producto (obligatorio) - **description:** Descripción del producto (obligatorio) - **category:** Categoría del producto (obligatorio) - **quantity:** Cantidad del producto (opcional, por defecto 0) - **price:** Precio del producto (opcional, por defecto 0)
+**Formato del Archivo Excel** 
+- El archivo Excel debe tener las siguientes columnas: 
+  - **name:** Nombre del producto (obligatorio) 
+  - **description:** Descripción del producto (obligatorio) 
+  - **category:** Categoría del producto (obligatorio) 
+  - **quantity:** Cantidad del producto (opcional, por defecto 0) 
+  - **price:** Precio del producto (opcional, por defecto 0)
 
 **Pasos para la Carga Masiva**
 
@@ -156,7 +164,7 @@ Para ejecutar el script, simplemente navega al directorio `python_scripts` y eje
 python api_interaction.py
 ```
 
-[![Ejecición del Script](Google Drive "Ejecición del Script")](http://https://drive.google.com/file/d/138bAm0bVTK4DRJwG1G5SxA-k_wFeX-C4/view?usp=sharing "Ejecición del Script")
+[![ejecuci-n-de-script.png](https://i.postimg.cc/yNz9SYX7/ejecuci-n-de-script.png)](https://postimg.cc/K1J46bHW)
 
 ## Sustentación
 
