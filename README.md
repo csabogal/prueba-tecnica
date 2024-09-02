@@ -62,7 +62,7 @@ verifica que tengas instalado Node.js (v14 o superior) de lo contrario ve a la p
     ```
 
 ## Configuración de la Base de Datos
-El proyecto utiliza MongoDB como base de datos. Asegúrate de tener MongoDB instalado y en ejecución. (si quieres ver la BD, no es indispensable para interactuar con la aplicación)
+El proyecto utiliza MongoDB como base de datos. Asegúrate de tener MongoDB instalado y en ejecución. (si quieres ver la BD. NO es indispensable para interactuar con la aplicación)
 
 **La conexión a la base de datos se configura en el archivo `.env` del backend.**
 ```javascript
