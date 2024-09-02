@@ -148,6 +148,8 @@ router.post("/bulk", authMiddleware, async (req, res) => {
   - **category:** Categoría del producto (obligatorio) 
   - **quantity:** Cantidad del producto (opcional, por defecto 0) 
   - **price:** Precio del producto (opcional, por defecto 0)
+ 
+[![ejemplo-de-carga-masiva.png](https://i.postimg.cc/3RrCqJq3/ejemplo-de-carga-masiva.png)](https://postimg.cc/QBPT9ssz)
 
 **Pasos para la Carga Masiva**
 
