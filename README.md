@@ -1,4 +1,4 @@
-# Prueba Técnica :fa-laptop:
+# Prueba Técnica
 
 ## Introducción
 
