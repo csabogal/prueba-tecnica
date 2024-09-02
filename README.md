@@ -91,6 +91,7 @@ mongoose
 - URL: https://jsonplaceholder.typicode.com/ 
 - Uso: Para obtener información adicional del usuario en el perfil. 
 - Endpoint utilizado: https://jsonplaceholder.typicode.com/users/{userId}
+  
 **Fake Store API:** 
 - URL: https://fakestoreapi.com/ 
 - Uso: Para poblar el módulo de productos con datos adicionales. 
@@ -155,9 +156,11 @@ router.post("/bulk", authMiddleware, async (req, res) => {
 
 - Accede a la Sección de Productos:
   - Navega a la sección de productos en la aplicación web.
+    
 - Sube el Archivo Excel:
   - Busca la opción para subir un archivo Excel.
   - Selecciona el archivo Excel que contiene los datos de los productos.
+    
 - Validación y Carga:
   - El sistema validará los datos del archivo Excel.
   - Si hay errores en el archivo, se mostrarán mensajes de error específicos.
