@@ -1,70 +1,182 @@
-# Getting Started with Create React App
+# Prueba Técnica :fa-laptop:
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Introducción
 
-## Available Scripts
+El presente proyecto describe la construcción y funcionamiento de una aplicación web completa diseñada para la gestión de usuarios y productos. El frontend fue desarrollado con Respond y el backend en Node.js con Express. La aplicación incluye funcionalidades clave como la autenticación de usuarios, carga masiva de datos, integración con dos APIs externas y un script en Python que interactúa con el sistema.
 
-In the project directory, you can run:
+## Requisitos Previos
 
-### `npm start`
+- Node.js (v14 o superior)
+- npm (v6 o superior)
+- MongoDB (v4 o superior)
+- Python (v3.6 o superior)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Instalación
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Clonar el Repositorio
 
-### `npm test`
+````bash
+git clone https://github.com/csabogal/prueba-tecnica.git
+cd prueba-tecnica```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+### Configuración del Backend
+1. Navega al directorio del backend:
+    ```bash
+    cd backend
+    ```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2. Instala las dependencias:
+    ```bash
+    npm install
+    ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. Crea un archivo `.env` en el directorio `backend` con el siguiente contenido:
+    ```env
+    MONGO_URI=mongodb://localhost:27017/prueba-tecnica
+    JWT_SECRET=tu_secreto_jwt
+    ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+4. Inicia el servidor:
+    ```bash
+    npm run dev
+    ```
 
-### `npm run eject`
+### Configuración del Frontend
+1. Navega al directorio del frontend:
+    ```bash
+    cd ../
+    ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. Instala las dependencias:
+    ```bash
+    npm install
+    ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. Inicia la aplicación:
+    ```bash
+    npm start
+    ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Configuración de la Base de Datos
+El proyecto utiliza MongoDB como base de datos. Asegúrate de tener MongoDB instalado y en ejecución.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+**La conexión a la base de datos se configura en el archivo `.env` del backend.**
+```javascript
+   MONGO_URI=mongodb+srv://csabogal:*****@cluster0.jrqym.mongodb.net/
+````
 
-## Learn More
+Luego se importa la dependencia para configurarla en el server del backend
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```javascript
+// Conectar a MongoDB
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB conectado exitosamente"))
+  .catch((err) => {
+    console.error("Error detallado al conectar a MongoDB:", err);
+    process.exit(1);
+  });
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Integración de las API's Externas
 
-### Code Splitting
+**- jsonplaceholder api:** - URL: https://jsonplaceholder.typicode.com/ - Uso: Para obtener información adicional del usuario en el perfil. - Endpoint utilizado: https://jsonplaceholder.typicode.com/users/{userId}
+**- Fake Store API:** - URL: https://fakestoreapi.com/ - Uso: Para poblar el módulo de productos con datos adicionales. - Endpoint utilizado: https://fakestoreapi.com/products
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Estas APIs gratuitas nos han permitido enriquecer la funcionalidad de nuestra aplicación, proporcionando datos de ejemplo para el perfil de usuario y para el catálogo de productos.
 
-### Analyzing the Bundle Size
+```javascript
+// Obtener productos de la API externa
+const externalResponse = await fetch("https://fakestoreapi.com/products");
+if (!externalResponse.ok) {
+  throw new Error("Error al cargar los productos de la API externa");
+}
+const externalData = await externalResponse.json();
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+// Combinar y formatear los productos
+const combinedProducts = [
+  ...localData,
+  ...externalData.map((product) => ({
+    _id: `external_${product.id}`,
+    name: product.title,
+    description: product.description,
+    category: product.category,
+    quantity: Math.floor(Math.random() * 100), // Cantidad aleatoria
+    price: product.price,
+  })),
+];
+```
 
-### Making a Progressive Web App
+## Carga Masiva de Datos
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Para realizar la carga masiva de datos en la base de datos, se utiliza una ruta específica en el backend que permite la inserción de múltiples productos a la vez.
 
-### Advanced Configuration
+```javascript
+// Inserción masiva de productos
+router.post("/bulk", authMiddleware, async (req, res) => {
+  try {
+    const products = req.body;
+    const insertedProducts = await Product.insertMany(products);
+    res.status(201).json(insertedProducts);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+####Requisitos Previos
 
-### Deployment
+- Asegúrate de tener el servidor backend en funcionamiento.
+- Asegúrate de tener un archivo Excel con los datos de los productos que deseas cargar.
+  **Formato del Archivo Excel** - El archivo Excel debe tener las siguientes columnas: - **name:** Nombre del producto (obligatorio) - **description:** Descripción del producto (obligatorio) - **category:** Categoría del producto (obligatorio) - **quantity:** Cantidad del producto (opcional, por defecto 0) - **price:** Precio del producto (opcional, por defecto 0)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**Pasos para la Carga Masiva**
 
-### `npm run build` fails to minify
+- Accede a la Sección de Productos:
+  - Navega a la sección de productos en la aplicación web.
+- Sube el Archivo Excel:
+  - Busca la opción para subir un archivo Excel.
+  - Selecciona el archivo Excel que contiene los datos de los productos.
+- Validación y Carga:
+  - El sistema validará los datos del archivo Excel.
+  - Si hay errores en el archivo, se mostrarán mensajes de error específicos.
+  - Si los datos son válidos, se procederá a la carga masiva de los productos en la base de datos.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Uso del Script en Python para la Interacción con la API
+
+El script en Python permite registrar usuarios, iniciar sesión y consultar el perfil del usuario utilizando la API del backend.
+
+Para ejecutar el script, simplemente navega al directorio `python_scripts` y ejecuta:
+
+```bash
+python api_interaction.py
+```
+
+[![Ejecición del Script](Google Drive "Ejecición del Script")](http://https://drive.google.com/file/d/138bAm0bVTK4DRJwG1G5SxA-k_wFeX-C4/view?usp=sharing "Ejecición del Script")
+
+## Sustentación
+
+### Decisiones Técnicas
+
+1. **Stack Tecnológico**: Se eligió React para el frontend por su popularidad y facilidad de uso. Para el backend, se utilizó Node.js con Express debido a su rendimiento y escalabilidad.
+2. **Autenticación**: Se implementó JWT para la autenticación de usuarios, proporcionando un método seguro y escalable para manejar sesiones.
+3. **Base de Datos**: MongoDB fue elegido por su flexibilidad y capacidad para manejar grandes volúmenes de datos no estructurados.
+4. **Carga Masiva**: Se implementó una ruta específica para la carga masiva de productos, optimizando el proceso de inserción de datos en la base de datos.
+
+### Decisiones de Diseño
+
+1. **Componentización**: En el frontend, se siguió el principio de componentización, creando componentes reutilizables y modulares.
+2. **Manejo de Estado**: Se utilizó el hook `useState` y `useEffect` de React para manejar el estado y los efectos secundarios en los componentes.
+3. **Estilos**: Se utilizó Material-UI para los estilos, proporcionando una interfaz de usuario moderna y consistente teniendo como enfoque principal el UX y mobile-first.
+
+Con estas decisiones, se buscó crear una aplicación robusta, escalable y fácil de mantener.
+
+---
+
+## Autor
+
+- [@csabogal](https://github.com/csabogal)
